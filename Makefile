@@ -1,4 +1,4 @@
-objs = main.o cxa.o
+objs = main.o cxa.o fatal.o
 flags = -Wall -Wextra -Wpedantic
 final = tsp
 

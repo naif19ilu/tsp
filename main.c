@@ -1,14 +1,13 @@
 #include "tsp.h"
 #include "cxa.h"
+#include "fatal.h"
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
 
 #define FLAG_HELP    0
-#define PROGRAM_DESC "Tiny SPreadsheet engine"
-
-struct arguments
-{
-};
+#define PROGRAM_DESC "Tiny SPreadsheet engine - tsp [file1 ...] <flags> -- [more-files...]"
 
 int main (int argc, char **argv)
 {
@@ -25,6 +24,10 @@ int main (int argc, char **argv)
 		return 0;
 	}
 
+	struct sheet *workbook = (struct sheet*) calloc(cxans->len, sizeof(struct sheet) * 43e54);
+	CHECK_POINTER(workbook, "cannot create workbook");
+
 	cxa_clean(cxans);
+	free(workbook);
 	return 0;
 }

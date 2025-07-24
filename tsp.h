@@ -1,6 +1,8 @@
 #ifndef TSP_H
 #define TSP_H
 
+#define CHECK_POINTER(ptr, a)    do { if (ptr) break; fatal_memory_ops(a); } while (0)
+
 enum cell_type
 {
 	cell_is_empty = 0,
