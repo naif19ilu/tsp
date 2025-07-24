@@ -1,7 +1,9 @@
+import java.io.File;
+
 public class Sheet
 {
 	private String filename;
-	private String source;
+	private char[] source;
 	private long   length;
 	private int    columns;
 	private int    rows;
@@ -10,11 +12,10 @@ public class Sheet
 	public Sheet (final String filename)
 	{
 		this.filename = filename;
-		this.readSource();
-	}
+		this.source = Help.readFile(filename);
 		
-	private void readSource ()
-	{
-		System.out.println(this.filename);
-	}	
+		System.out.println(this.source);
+		System.out.println("~~~~~~~~~~~~~");
+	}
 }
+
