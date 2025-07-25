@@ -35,7 +35,7 @@ int main (int argc, char **argv)
 	for (unsigned long i = 0; i < sheetsgiven; i++) { init_sheet(cxans->positional[i], &workbook[i]); }
 	cxa_clean(cxans);
 
-	for (unsigned long n = 0; n < sheetsgiven; n++) { lexer_work_with_this(&workbook[n]); }
+	for (unsigned long n = 0; n < sheetsgiven; n++) { lexer_workout(&workbook[n]); }
 	return 0;
 }
 

@@ -1,26 +1,37 @@
 #include "lexer.h"
 
+#include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 
-void lexer_work_with_this (struct sheet *sheet)
+struct lexer
+{
+	unsigned long  at;
+	unsigned short loffset;
+};
+
+static void extract_literal_number (struct token*, struct lexer*);
+
+void lexer_workout (struct sheet *sheet)
 {
 	struct cell *cc = &sheet->grid[0];
-	unsigned short row = 0, loffset = 0;
+	unsigned short row = 0;
 
-	for (unsigned long i = 0; i < sheet->length; i++)
+	struct lexer lxr = {0, 0};
+
+	for (; lxr.at < sheet->length; lxr.at++)
 	{
-		const char ch = sheet->source[i];
+		const char ch = sheet->source[lxr.at];
 
-		if (ch == '\n' && ((i + 1) < sheet->length))  { loffset = 0; cc = &sheet->grid[++row * sheet->cols]; continue; }
-		if (isspace(ch))                              { loffset++;                                           continue; }
-		if (ch == '|')                                { loffset++; cc++;                                     continue; }
+		if (ch == '\n' && ((lxr.at + 1) < sheet->length)) { lxr.loffset = 0; cc = &sheet->grid[++row * sheet->cols]; continue; }
+		if (isspace(ch))                                  { lxr.loffset++;                                           continue; }
+		if (ch == '|')                                    { lxr.loffset++; cc++;                                     continue; }
 
 		struct token *ct = &cc->stream[cc->nth++];
-		ct->meta.loffset = loffset;
+		ct->meta.loffset = lxr.loffset++;
 		ct->meta.lnumber = row + 1;
-		ct->meta.context = sheet->source + i;
-
+		ct->meta.context = sheet->source + lxr.at;
 
 		switch (ch)
 		{
@@ -33,7 +44,7 @@ void lexer_work_with_this (struct sheet *sheet)
 			case '6':
 			case '7':
 			case '8':
-			case '9': break;
+			case '9': extract_literal_number(ct, &lxr); break;
 
 			case '"': break;
 
@@ -41,4 +52,22 @@ void lexer_work_with_this (struct sheet *sheet)
 			case '@': break;
 		}
 	}
+}
+
+static void extract_literal_number (struct token *token, struct lexer *lxr)
+{
+	char *fini;
+	errno = 0;
+
+	token->as.number = strtold(token->meta.context, &fini);
+	if (errno == ERANGE)
+	{
+	}
+
+	const unsigned int diff = fini - token->meta.context;
+	lxr->at      += diff;
+	lxr->loffset += diff;
+
+	token->type = token_is_number;
+	printf("(%d, %d): number: %Lf\n", token->meta.lnumber, token->meta.loffset, token->as.number);
 }

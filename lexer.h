@@ -3,6 +3,6 @@
 
 #include "tsp.h"
 
-void lexer_work_with_this (struct sheet*);
+void lexer_workout (struct sheet*);
 
 #endif

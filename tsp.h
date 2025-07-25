@@ -20,6 +20,8 @@ enum token_type
 	token_is_var_ref = '@',
 };
 
+struct cell;
+
 struct token
 {
 	struct
@@ -27,6 +29,13 @@ struct token
 		unsigned short lnumber, loffset;
 		char *context;
 	} meta;
+	union
+	{
+		long double   number;
+		unsigned long text;
+		struct cell   *reference;
+	} as;
+	enum token_type type;
 };
 
 struct cell
