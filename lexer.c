@@ -1,6 +1,7 @@
 #include "lexer.h"
+#include "fatal.h"
 
-#include <errno.h>
+#include <float.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +13,7 @@ struct lexer
 };
 
 static void extract_literal_number (struct token*, struct lexer*);
-static void extract_literal_string (struct token*, struct lexer*, const unsigned long);
+static void extract_literal_string (struct token*, struct lexer*);
 
 void lexer_workout (struct sheet *sheet)
 {
@@ -50,7 +51,7 @@ void lexer_workout (struct sheet *sheet)
 
 			case '-': if (isdigit(sheet->source[lxr.at + 1])) extract_literal_number(ct, &lxr); break;
 
-			case '"': extract_literal_string(ct, &lxr, sheet->length); break;
+			case '"': extract_literal_string(ct, &lxr); break;
 
 			case '$': break;
 			case '@': break;
@@ -63,14 +64,14 @@ void lexer_workout (struct sheet *sheet)
 static void extract_literal_number (struct token *token, struct lexer *lxr)
 {
 	char *fini;
-	errno = 0;
-
 	token->as.number = strtold(token->meta.context, &fini);
-	if (errno == ERANGE)
-	{
-	}
 
 	const unsigned int diff = fini - token->meta.context;
+	if (token->as.number >= LDBL_MAX || token->as.number <= LDBL_MIN)
+	{
+		fatal_pre_lexer(token->meta.context, (unsigned short) diff, token->meta.lnumber, token->meta.loffset, prelex_number_overflow);
+	}
+
 	lxr->at      += diff;
 	lxr->loffset += diff;
 
@@ -78,15 +79,16 @@ static void extract_literal_number (struct token *token, struct lexer *lxr)
 	printf("(%d, %d): number: %Lf\n", token->meta.lnumber, token->meta.loffset, token->as.number);
 }
 
-static void extract_literal_string (struct token *token, struct lexer *lxr, const unsigned long lim)
+static void extract_literal_string (struct token *token, struct lexer *lxr)
 {
 	token->as.text = 0;
 	char *src = token->meta.context + 1;
 
 	while (src[token->as.text] != '"')
 	{
-		if (token->as.text == lim)
+		if (src[token->as.text] == 0)
 		{
+			fatal_pre_lexer(token->meta.context, token->as.text, token->meta.lnumber, token->meta.loffset, prelex_nontermiated_string);
 		}
 		token->as.text++;
 	}
