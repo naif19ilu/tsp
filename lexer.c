@@ -12,6 +12,7 @@ struct lexer
 };
 
 static void extract_literal_number (struct token*, struct lexer*);
+static void extract_literal_string (struct token*, struct lexer*, const unsigned long);
 
 void lexer_workout (struct sheet *sheet)
 {
@@ -32,6 +33,7 @@ void lexer_workout (struct sheet *sheet)
 		ct->meta.loffset = lxr.loffset++;
 		ct->meta.lnumber = row + 1;
 		ct->meta.context = sheet->source + lxr.at;
+		ct->type         = (enum token_type) ch;
 
 		switch (ch)
 		{
@@ -46,10 +48,14 @@ void lexer_workout (struct sheet *sheet)
 			case '8':
 			case '9': extract_literal_number(ct, &lxr); break;
 
-			case '"': break;
+			case '-': if (isdigit(sheet->source[lxr.at + 1])) extract_literal_number(ct, &lxr); break;
+
+			case '"': extract_literal_string(ct, &lxr, sheet->length); break;
 
 			case '$': break;
 			case '@': break;
+
+			default: break;
 		}
 	}
 }
@@ -70,4 +76,24 @@ static void extract_literal_number (struct token *token, struct lexer *lxr)
 
 	token->type = token_is_number;
 	printf("(%d, %d): number: %Lf\n", token->meta.lnumber, token->meta.loffset, token->as.number);
+}
+
+static void extract_literal_string (struct token *token, struct lexer *lxr, const unsigned long lim)
+{
+	token->as.text = 0;
+	char *src = token->meta.context + 1;
+
+	while (src[token->as.text] != '"')
+	{
+		if (token->as.text == lim)
+		{
+		}
+		token->as.text++;
+	}
+
+	printf("(%d, %d): string: %.*s\n", token->as.text, token->meta.loffset, (int) token->as.text, src);
+	token->type = token_is_string;
+
+	lxr->at      += token->as.text + 1;
+	lxr->loffset += token->as.text + 1;
 }

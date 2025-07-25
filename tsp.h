@@ -16,8 +16,8 @@ enum token_type
 {
 	token_is_number,
 	token_is_string  = '"',
-	token_is_cte_ref = '$',
-	token_is_var_ref = '@',
+	token_is_abs_ref = '$',
+	token_is_rel_ref = '@',
 };
 
 struct cell;
@@ -31,9 +31,9 @@ struct token
 	} meta;
 	union
 	{
-		long double   number;
-		unsigned long text;
-		struct cell   *reference;
+		long double    number;
+		unsigned short text;
+		struct cell    *reference;
 	} as;
 	enum token_type type;
 };
