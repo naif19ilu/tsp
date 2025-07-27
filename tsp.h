@@ -33,7 +33,7 @@ struct token
 	{
 		long double    number;
 		unsigned short text;
-		struct cell    *reference;
+		struct         { struct cell *at; unsigned short row, col, sheetId; } reference;
 	} as;
 	enum token_type type;
 };
@@ -59,6 +59,17 @@ struct sheet
 	char           *source;
 	unsigned long  length, noCells;
 	unsigned short rows, cols;
+	unsigned short id;
+};
+
+struct engine
+{
+	struct
+	{
+		unsigned short precision;
+	} args;
+	struct sheet   *workbook;
+	unsigned short workbooksz;
 };
 
 #endif

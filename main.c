@@ -5,41 +5,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
-#define FLAG_HELP    0
-#define PROGRAM_DESC "Tiny SPreadsheet engine - tsp [file1 ...] <flags> -- [more-files...]"
+#define FLAG_HELP       0
+#define PROGRAM_DESC    "Tiny SPreadsheet engine - tsp [file1 ...] <flags> -- [more-files...]"
+#define DEFAULT_ARG_p   1
 
-static void init_sheet (const char*, struct sheet*);
+static void init_sheet (const char*, struct sheet*, const unsigned short);
 static void build_sheet (struct sheet*);
 
 int main (int argc, char **argv)
 {
+	struct engine eg;
+	memset(&eg, 0, sizeof(eg));
+
+	eg.args.precision = DEFAULT_ARG_p;
+
 	struct CxaFlag flags[] =
 	{
-		CXA_SET_CHR("help", "show this message", NULL, CXA_FLAG_ARG_GIVEN_NON, 'h'),
+		CXA_SET_CHR("help",      "show this message",              NULL,               CXA_FLAG_TAKER_NON, 'h'),
+		CXA_SET_SHT("precision", "number precision (1 default)",   &eg.args.precision, CXA_FLAG_TAKER_MAY, 'p'),
 		CXA_SET_END
 	};
 
 	struct Cxa *cxans = cxa_execute((unsigned char) argc, argv, flags, "tsp");
-	const unsigned long sheetsgiven = cxans->len;
+	eg.workbooksz = cxans->len;
 
-	if ((flags[FLAG_HELP].meta & CXA_FLAG_SEEN_MASK) || sheetsgiven == 0)
+	if ((flags[FLAG_HELP].meta & CXA_FLAG_SEEN_MASK) || eg.workbooksz == 0)
 	{
 		cxa_print_usage(PROGRAM_DESC, flags);
 		return 0;
 	}
 
-	struct sheet *workbook = (struct sheet*) calloc(sheetsgiven, sizeof(struct sheet));
-	CHECK_POINTER(workbook, "cannot create workbook");
+	eg.workbook = (struct sheet*) calloc(eg.workbooksz, sizeof(struct sheet));
+	CHECK_POINTER(eg.workbook, "cannot create workbook");
 
-	for (unsigned long i = 0; i < sheetsgiven; i++) { init_sheet(cxans->positional[i], &workbook[i]); }
+	for (unsigned long i = 0; i < eg.workbooksz; i++) { init_sheet(cxans->positional[i], &eg.workbook[i], (unsigned short) i); }
 	cxa_clean(cxans);
 
-	for (unsigned long n = 0; n < sheetsgiven; n++) { lexer_workout(&workbook[n]); }
+	for (unsigned long n = 0; n < eg.workbooksz; n++) { lexer_workout(&eg.workbook[n]); }
 	return 0;
 }
 
-static void init_sheet (const char *filename, struct sheet *sheet)
+static void init_sheet (const char *filename, struct sheet *sheet, const unsigned short id)
 {
 	sheet->path = filename;
 	FILE *file = fopen(filename, "r");
@@ -57,6 +65,7 @@ static void init_sheet (const char *filename, struct sheet *sheet)
 	if (ferror(file)) { fatal_file_ops(filename); }
 	if (fclose(file)) { fatal_file_ops(filename); }
 
+	sheet->id = id;
 	build_sheet(sheet);
 }
 

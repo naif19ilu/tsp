@@ -15,6 +15,8 @@ struct lexer
 static void extract_literal_number (struct token*, struct lexer*);
 static void extract_literal_string (struct token*, struct lexer*);
 
+static void extract_literal_reference (struct token*, struct lexer*);
+
 void lexer_workout (struct sheet *sheet)
 {
 	struct cell *cc = &sheet->grid[0];
@@ -53,8 +55,8 @@ void lexer_workout (struct sheet *sheet)
 
 			case '"': extract_literal_string(ct, &lxr); break;
 
-			case '$': break;
-			case '@': break;
+			case '$':
+			case '@': extract_literal_reference(ct, &lxr); break;
 
 			default: break;
 		}
@@ -94,8 +96,23 @@ static void extract_literal_string (struct token *token, struct lexer *lxr)
 	}
 
 	printf("(%d, %d): string: %.*s\n", token->as.text, token->meta.loffset, (int) token->as.text, src);
-	token->type = token_is_string;
 
 	lxr->at      += token->as.text + 1;
 	lxr->loffset += token->as.text + 1;
+}
+
+static void extract_literal_reference (struct token *token, struct lexer *lxr)
+{
+	short id = -1;
+	unsigned short row = 0, col = 0;
+
+	char *getter = token->meta.context + 1;
+	if (*getter != '!') { goto get_column__; }
+
+	const unsigned short namelength = strcspn(++getter, ": \n\0");
+	if (namelength == 0) { goto get_column__; }
+
+get_column__:
+
+
 }
